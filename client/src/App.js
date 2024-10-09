@@ -1,24 +1,36 @@
-import logo from './logo.svg';
 import './App.css';
+import React, {useState, useEffect} from 'react';
+import axios from 'axios';
+
 
 function App() {
+  console.log("안녕");
+  const [facilityData, setFacilityData] = useState(null);
+  const Url = '/api/hello';
+  useEffect(() => {
+    console.log("22222");
+      const fetchData = async () => {
+        try {
+          console.log("33333");
+          const rankresponse = await axios.get('/api/hello');
+          console.log(rankresponse);
+          console.log("444");
+          const port = rankresponse.data;
+  
+          setFacilityData(port);
+  
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        }
+      }
+      fetchData();
+      
+  })
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+      <div>
+          <h2>안녕하세요</h2>
+          <div>{facilityData}</div>
+      </div>
   );
 }
 
