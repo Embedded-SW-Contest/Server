@@ -12,7 +12,7 @@ function App() {
       const fetchData = async () => {
         try {
           console.log("33333");
-          const rankresponse = await axios.get('/api/hello');
+          const rankresponse = await axios.get(Url);
           console.log(rankresponse);
           console.log("444");
           const port = rankresponse.data;
