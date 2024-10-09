@@ -5,5 +5,6 @@ export default function Home() {
 	<main className="flex min-h-screen">
 		<h1>Raspberry pi</h1>
 </main>
+
 );
 }
