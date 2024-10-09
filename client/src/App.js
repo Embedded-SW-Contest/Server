@@ -16,6 +16,7 @@ function App() {
           console.log(rankresponse);
           console.log("444");
           const port = rankresponse.data;
+          console.log(port);
   
           setFacilityData(port);
   
@@ -25,11 +26,11 @@ function App() {
       }
       fetchData();
       
-  })
+  }, []);
   return (
       <div>
           <h2>안녕하세요</h2>
-          <div>{facilityData}</div>
+          <div>{facilityData ? facilityData[0] : "값이 없는데?..."}</div>
       </div>
   );
 }

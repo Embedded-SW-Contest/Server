@@ -1,13 +1,15 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 module.exports = function(app) {
+	console.log("dfdf");
+
     app.use(
 		"/api",
         createProxyMiddleware({
-            target: "http://117.16.154.71:5000",
-            changeOrigin: true,
+            target: "http://localhost:5000/",
+            changeOrigin: true
+			//pathRewrite: {'^/api' : ''}
         })
     );
 
-	console.log("proxy");
 };
