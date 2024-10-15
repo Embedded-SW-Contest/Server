@@ -48,7 +48,7 @@ function App () {
   const [map, setMap] = useState(null);
   const [markers, setMarkers] = useState([]); // 차량 마커 상태
 
-  const sseUrl = 'https://00gym.shop/api/cars'; // SSE 서버 URL
+  const sseUrl = '/api/cars'; // SSE 서버 URL
 
   // SSE로 차량 데이터 받아오기
   useEffect(() => {
