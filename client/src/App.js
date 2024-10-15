@@ -96,7 +96,7 @@ function App () {
   }, []);
 
   useEffect(() => {
-    if (!mapElement.current || !naver) return;
+    if (!mapElement.current || !naver || !coordData) return;
   
     // 지도 초기화
     if (!map && coordData.length > 0) {
