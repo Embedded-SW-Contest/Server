@@ -99,11 +99,12 @@ function App () {
     if (!mapElement.current || !naver) return;
   
     // 지도 초기화
-    if (!map) {
+    if (!map && coordData.length > 0) {
+      const firstCarPosition = new naver.maps.LatLng(coordData[0].car_lat, coordData[0].car_lon);
       const newMap = new naver.maps.Map(mapElement.current, {
         mapDataControl: false,
         logoControl: false,
-        center: new naver.maps.LatLng(35.164260, 128.094415), // 기본 위치
+        center: firstCarPosition, // 기본 위치
         zoom: 20,
         zoomControl: false,
       });
