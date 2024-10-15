@@ -41,107 +41,93 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-
-function App() {
+function App () {
   const mapElement = useRef(null);
   const { naver } = window;
-  const [position, setPosition] = useState(null);
+  const [coordData, setCoordData] = useState(null); // 차량 좌표 데이터
   const [map, setMap] = useState(null);
-  const [marker, setMarker] = useState(null);
-  const [circle, setCircle] = useState(null); 
-  const [objectMarkers, setObjectMarkers] = useState([]); // 물체의 마커 상태 추가
+  const [markers, setMarkers] = useState([]); // 차량 마커 상태
 
-  const dummyCoordinates = [
-    { latitude: 35.164260, longitude: 128.094415 },
+  const sseUrl = 'https://00gym.shop/api/cars'; // SSE 서버 URL
 
-    { latitude: 35.164083, longitude: 128.095193 },
-  ];
+  // SSE로 차량 데이터 받아오기
+  useEffect(() => {
+    const eventSource = new EventSource(sseUrl);
+
+    eventSource.onmessage = (event) => {
+      console.log('New data received from SSE:', event.data);
+      const port = JSON.parse(event.data); // 차량 좌표 데이터를 파싱
+      setCoordData(port); // 받아온 데이터를 상태로 저장
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('SSE Error:', error);
+      eventSource.close(); // 에러 발생 시 연결 종료
+    };
+
+    return () => {
+      eventSource.close(); // 컴포넌트 언마운트 시 연결 종료
+    };
+  }, []);
 
   useEffect(() => {
     if (!mapElement.current || !naver) return;
-
-    const handleSuccess = (pos) => {
-      const { latitude, longitude } = pos.coords;
-      const location = new naver.maps.LatLng(latitude, longitude);
-
-      if (!map) {
-        const mapOptions = {
-          mapDataControl: false,
-          logoControl: false,
-          center: location,
-          zoom: 20,
-          zoomControl: false,
-        };
-        const newMap = new naver.maps.Map(mapElement.current, mapOptions);
-        setMap(newMap);
-
-        // 마커 추가 및 상태 저장
+  
+    // 지도 초기화
+    if (!map) {
+      const newMap = new naver.maps.Map(mapElement.current, {
+        mapDataControl: false,
+        logoControl: false,
+        center: new naver.maps.LatLng(35.164260, 128.094415), // 기본 위치
+        zoom: 20,
+        zoomControl: false,
+      });
+      setMap(newMap);
+    }
+  
+    // coordData가 업데이트될 때마다 마커 갱신
+    if (coordData && map) {
+      // 기존 마커들 삭제
+      markers.forEach(marker => marker.setMap(null));
+      
+      // 새로운 차량 좌표로 마커 생성
+      const newMarkers = coordData.map((car) => {
+        const carPosition = new naver.maps.LatLng(car.car_lat, car.car_lon);
+  
+        // 차량 마커 생성
         const newMarker = new naver.maps.Marker({
-          position: location,
-          map: newMap,
+          position: carPosition,
+          map: map,
+          icon: {
+            content: `<div style="background-color: blue; border-radius: 50%; width: 30px; height: 30px;"></div>`,
+            anchor: new naver.maps.Point(15, 15),
+          }
         });
-        setMarker(newMarker);
-
-        // 반경 30m의 원 추가 및 상태로 저장
-        const newCircle = new naver.maps.Circle({
-          map: newMap,
-          center: location,
+  
+        // 차량 반경 30m 원 생성
+        new naver.maps.Circle({
+          map: map,
+          center: carPosition,
           radius: 30,
           strokeColor: '#5347AA',
           strokeOpacity: 0.8,
           strokeWeight: 2,
           fillColor: '#CFE7FF',
-          fillOpacity: 0.5,
+          fillOpacity: 0,
         });
-        setCircle(newCircle); // 원 상태 저장
-
-        setPosition(location);
-
-        const newObjectMarkers = dummyCoordinates.map((coord) => {
-          return new naver.maps.Marker({
-            position: new naver.maps.LatLng(coord.latitude, coord.longitude),
-            map: newMap,
-            icon: {
-              content: `<img src="/beacon.png" alt="beacon" style="width: 50px; height: 50px;">`, 
-              size: new naver.maps.Size(50, 50), // 이미지 크기
-              origin: new naver.maps.Point(0, 0),
-              anchor: new naver.maps.Point(25, 25), // 마커 중심점을 이미지 가운데로 설정
-            }
-          });
-        });
-        setObjectMarkers(newObjectMarkers); // 물체 마커 배열 상태 저장
-      } else {
-        // 지도 중심과 마커, 원의 위치만 갱신
-        map.setCenter(location);
-        if (marker) {
-          marker.setPosition(location); // 마커 위치 갱신
-        }
-        if (circle) {
-          circle.setCenter(location); // 원 위치 갱신
-        }
-        setPosition(location);
-      }
-    };
-
-    const handleError = (error) => {
-      console.error("Error fetching location: ", error);
-    };
-
-    if (navigator.geolocation) {
-      const watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 5000,
+  
+        return newMarker;
       });
-
-      // 컴포넌트 언마운트 시 watchPosition 해제
-      return () => {
-        navigator.geolocation.clearWatch(watchId);
-      };
-    } else {
-      console.error("Geolocation is not supported by this browser.");
+  
+      setMarkers(newMarkers); // 마커 상태 업데이트
+  
+      // 지도의 중심을 첫 번째 차량의 좌표로 설정
+      if (coordData.length > 0) {
+        const firstCarPosition = new naver.maps.LatLng(coordData[0].car_lat, coordData[0].car_lon);
+        map.setCenter(firstCarPosition);
+      }
     }
-  }, [naver, map, marker, circle]);
+  }, [coordData, map]); // coordData와 map이 변경될 때 실행
 
   return (
     <>
