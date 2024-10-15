@@ -45,14 +45,17 @@ function App () {
   const mapElement = useRef(null);
   const { naver } = window;
   const [coordData, setCoordData] = useState(null); // 차량 좌표 데이터
+  const [userData, setUserData] = useState(null); // 사용자 좌표 데이터
   const [map, setMap] = useState(null);
-  const [markers, setMarkers] = useState([]); // 차량 마커 상태
+  const [Carmarkers, setCarMarkers] = useState([]); // 차량 마커 상태
+  const [userMarkers, setUserMarkers] = useState([]); // 사용자 마커 상태
 
-  const sseUrl = 'https://00gym.shop/api/cars'; // SSE 서버 URL
+  const sseCarUrl = '/api/cars'; // SSE 서버 차량 좌표 URL
+  const sseUserUrl = '/api/users'; // SSE 서버 사용자 좌표 URL
 
   // SSE로 차량 데이터 받아오기
   useEffect(() => {
-    const eventSource = new EventSource(sseUrl);
+    const eventSource = new EventSource(sseCarUrl);
 
     eventSource.onmessage = (event) => {
       console.log('New data received from SSE:', event.data);
@@ -62,6 +65,26 @@ function App () {
 
     eventSource.onerror = (error) => {
       console.error('SSE Error:', error);
+      eventSource.close(); // 에러 발생 시 연결 종료
+    };
+
+    return () => {
+      eventSource.close(); // 컴포넌트 언마운트 시 연결 종료
+    };
+  }, []);
+
+  // SSE로 사용자 데이터 받아오기
+  useEffect(() => {
+    const eventSource = new EventSource(sseUserUrl);
+
+    eventSource.onmessage = (event) => {
+      console.log('New user data received from SSE:', event.data);
+      const userData = JSON.parse(event.data); // 사용자 좌표 데이터를 파싱
+      setUserData(userData); // 받아온 데이터를 상태로 저장
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('User SSE Error:', error);
       eventSource.close(); // 에러 발생 시 연결 종료
     };
 
@@ -85,17 +108,15 @@ function App () {
       setMap(newMap);
     }
   
-    // coordData가 업데이트될 때마다 마커 갱신
     if (coordData && map) {
-      // 기존 마커들 삭제
-      markers.forEach(marker => marker.setMap(null));
-      
+      // 기존 차량 마커 삭제
+      Carmarkers.forEach(marker => marker.setMap(null));
+  
       // 새로운 차량 좌표로 마커 생성
-      const newMarkers = coordData.map((car) => {
+      const CarMarkers = coordData.map((car) => {
         const carPosition = new naver.maps.LatLng(car.car_lat, car.car_lon);
   
-        // 차량 마커 생성
-        const newMarker = new naver.maps.Marker({
+        const CarMarker = new naver.maps.Marker({
           position: carPosition,
           map: map,
           icon: {
@@ -104,7 +125,6 @@ function App () {
           }
         });
   
-        // 차량 반경 30m 원 생성
         new naver.maps.Circle({
           map: map,
           center: carPosition,
@@ -116,10 +136,10 @@ function App () {
           fillOpacity: 0,
         });
   
-        return newMarker;
+        return CarMarker;
       });
   
-      setMarkers(newMarkers); // 마커 상태 업데이트
+      setCarMarkers(CarMarkers);
   
       // 지도의 중심을 첫 번째 차량의 좌표로 설정
       if (coordData.length > 0) {
@@ -127,7 +147,28 @@ function App () {
         map.setCenter(firstCarPosition);
       }
     }
-  }, [coordData, map]); // coordData와 map이 변경될 때 실행
+  
+    if (userData && map) {
+      // 기존 사용자 마커 삭제
+      userMarkers.forEach(marker => marker.setMap(null));
+  
+      // 새로운 사용자 좌표로 마커 생성
+      const newUserMarkers = userData.map((user) => {
+        const userPosition = new naver.maps.LatLng(user.user_lat, user.user_lon);
+  
+        return new naver.maps.Marker({
+          position: userPosition,
+          map: map,
+          icon: {
+            content: `<div style="background-color: green; border-radius: 50%; width: 30px; height: 30px;"></div>`,
+            anchor: new naver.maps.Point(15, 15),
+          }
+        });
+      });
+  
+      setUserMarkers(newUserMarkers);
+    }
+  }, [coordData, userData, map]); // userData 추가
 
   return (
     <>
