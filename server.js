@@ -199,3 +199,58 @@ app.post('/cars', (req, res) => { // 차량 GPS정보, 값이 없을땐 추가/�
 
 
 app.listen(port,()=> console.log(`Listening on port ${port}`));
+
+
+
+const { WebSocketServer } = require('ws');  // WebSocket 모듈 추가
+// WebSocket 서버를 위한 HTTP 서버 생성
+const server = require('http').createServer(app);
+
+// WebSocket 서버 생성 및 포트 설정
+const wss = new WebSocketServer({ server });
+
+wss.on('connection', (ws) => {
+    console.log('WebSocket client connected.');
+
+    ws.on('message', (message) => {
+        try {
+            const data = JSON.parse(message);
+            const { uni_num, car_lat, car_lon, braking_distance } = data;
+
+            const sql = `
+                INSERT INTO Car (uni_num, car_lat, car_lon, braking_distance)
+                VALUES (?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE 
+                    car_lat = VALUES(car_lat), 
+                    car_lon = VALUES(car_lon),
+                    braking_distance = VALUES(braking_distance)
+            `;
+
+            connection.query(sql, [uni_num, car_lat, car_lon, braking_distance], (err, results) => {
+                if (err) {
+                    console.error('Database error:', err);
+                    ws.send(JSON.stringify({ status: 'error', message: 'Database error' }));
+                    return;
+                }
+
+                if (results.affectedRows === 1) {
+                    ws.send(JSON.stringify({ status: 'success', message: `Car added with ID: ${uni_num}` }));
+                } else {
+                    ws.send(JSON.stringify({ status: 'success', message: `Car with uni_num: ${uni_num} updated` }));
+                }
+            });
+        } catch (error) {
+            console.error('Invalid JSON:', error);
+            ws.send(JSON.stringify({ status: 'error', message: 'Invalid JSON' }));
+        }
+    });
+
+    ws.on('close', () => {
+        console.log('WebSocket client disconnected.');
+    });
+});
+
+// HTTP 및 WebSocket 서버 실행
+server.listen(8081, () => {
+    console.log(`HTTP and WebSocket server running on http://localhost:${port}`);
+});
