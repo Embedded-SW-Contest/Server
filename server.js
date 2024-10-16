@@ -215,18 +215,42 @@ wss.on('connection', (ws) => {
     ws.on('message', (message) => {
         try {
             const data = JSON.parse(message);
-            const { uni_num, car_lat, car_lon, braking_distance } = data;
+            const { uni_num, car_lat, car_lon, braking_distance, car_flag } = data;
 
-            const sql = `
-                INSERT INTO Car (uni_num, car_lat, car_lon, braking_distance)
-                VALUES (?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE 
+            // 기본 INSERT 및 ON DUPLICATE KEY UPDATE 쿼리
+            let sql = `
+                INSERT INTO Car (uni_num, car_lat, car_lon, braking_distance
+            `;
+
+            // car_flag가 메시지에 포함되어 있으면 쿼리에 포함
+            if (typeof car_flag !== 'undefined') {
+                sql += `, car_flag`;
+            }
+
+            sql += `
+                ) VALUES (?, ?, ?, ?
+            `;
+
+            // car_flag가 메시지에 포함되어 있으면 값도 추가
+            let values = [uni_num, car_lat, car_lon, braking_distance];
+            if (typeof car_flag !== 'undefined') {
+                sql += `, ?`;
+                values.push(car_flag);
+            }
+
+            sql += `
+                ) ON DUPLICATE KEY UPDATE 
                     car_lat = VALUES(car_lat), 
                     car_lon = VALUES(car_lon),
                     braking_distance = VALUES(braking_distance)
             `;
 
-            connection.query(sql, [uni_num, car_lat, car_lon, braking_distance], (err, results) => {
+            // car_flag가 메시지에 포함되어 있으면 UPDATE에도 포함
+            if (typeof car_flag !== 'undefined') {
+                sql += `, car_flag = VALUES(car_flag)`;
+            }
+
+            connection.query(sql, values, (err, results) => {
                 if (err) {
                     console.error('Database error:', err);
                     ws.send(JSON.stringify({ status: 'error', message: 'Database error' }));
