@@ -8,6 +8,7 @@ function App() {
   const [map, setMap] = useState(null);
   const [Carmarkers, setCarMarkers] = useState([]); // 차량 마커 상태
   const [userMarkers, setUserMarkers] = useState([]); // 사용자 마커 상태
+  const [circles, setCircles] = useState([]); // 원 상태 관리
   const [showModal, setShowModal] = useState(false); // 모달 표시 상태
   const [shownCarIds, setShownCarIds] = useState(new Set()); // 모달이 표시된 차량 ID
 
