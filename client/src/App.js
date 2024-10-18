@@ -1,44 +1,3 @@
-
-// import './App.css';
-// import React, {useState, useEffect} from 'react';
-// import axios from 'axios';
-
-
-// function App() {
-//   console.log("안녕");
-//   const [facilityData, setFacilityData] = useState(null);
-//   const Url = '/api/hello';
-//   useEffect(() => {
-//     console.log("22222");
-//       const fetchData = async () => {
-//         try {
-//           console.log("33333");
-//           const rankresponse = await axios.get(Url);
-//           console.log(rankresponse);
-//           console.log("444");
-//           const port = rankresponse.data;
-//           console.log(port);
-  
-//           setFacilityData(port);
-  
-//         } catch (error) {
-//           console.error('Error fetching data:', error);
-//         }
-//       }
-//       fetchData();
-      
-//   }, []);
-//   return (
-//       <div>
-//           <h2>안녕하세요ddd</h2>
-//           <div>{facilityData ? facilityData[0].uni_num : "값이 없는데?..."}</div>
-//       </div>
-//   );
-// }
-
-// export default App;
-
-
 import { useEffect, useRef, useState } from 'react';
 
 function App () {
@@ -49,6 +8,8 @@ function App () {
   const [map, setMap] = useState(null);
   const [Carmarkers, setCarMarkers] = useState([]); // 차량 마커 상태
   const [userMarkers, setUserMarkers] = useState([]); // 사용자 마커 상태
+  const [showModal, setShowModal] = useState(false); // 모달 표시 상태
+  const [shownCarIds, setShownCarIds] = useState(new Set()); // 모달이 표시된 차량 ID
 
 
   const sseCarUrl = '/api/cars'; // SSE 서버 차량 좌표 URL
@@ -63,6 +24,25 @@ function App () {
       console.log('New data received from SSE:', event.data);
       const port = JSON.parse(event.data); // 차량 좌표 데이터를 파싱
       setCoordData(port); // 받아온 데이터를 상태로 저장
+
+      // 데이터 업데이트 시 shownCarIds 관리
+      const newShownCarIds = new Set(shownCarIds);
+      port.forEach(car => {
+        if (car.car_flag === 0) {
+          if (!newShownCarIds.has(car.car_id)) {
+            setShowModal(true);
+            newShownCarIds.add(car.car_id); // 모달이 표시된 차량 ID 추가
+
+            // 3초 후 모달 자동 닫기
+            setTimeout(() => {
+              setShowModal(false);
+            }, 3000);
+          }
+        } else {
+          newShownCarIds.delete(car.car_id); // car_flag가 0이면 삭제
+        }
+      });
+      setShownCarIds(newShownCarIds);
     };
 
     eventSource.onerror = (error) => {
@@ -123,8 +103,11 @@ function App () {
           position: carPosition,
           map: map,
           icon: {
-            content: `<div style="background-color: blue; border-radius: 50%; width: 30px; height: 30px;"></div>`,
-            anchor: new naver.maps.Point(15, 15),
+            content: `<img src="/beacon.png" alt="beacon" style="width: 50px; height: 50px;">`, 
+              size: new naver.maps.Size(30, 30), // 이미지 크기
+              origin: new naver.maps.Point(0, 0),
+              anchor: new naver.maps.Point(25, 25), // 마커 중심점을 이미지 가운데로 설정
+
           }
         });
   
@@ -176,6 +159,23 @@ function App () {
   return (
     <>
       <div ref={mapElement} style={{ minHeight: '100vh' }} />
+      {showModal && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '300px', // 모달 너비
+          height: '300px', // 모달 높이 
+          borderRadius: '50%', // 원형으로 만들기
+          backgroundColor: 'rgba(255, 255, 255, 0)',
+          backgroundImage: 'url(/Alert.png)', // 이미지로 배경 설정
+          backgroundSize: 'cover', // 이미지가 모달을 완전히 덮도록 설정
+          backgroundPosition: 'center', // 이미지 중앙 정렬
+        }}>
+        </div>
+      )}
+      
     </>
   );
 };
