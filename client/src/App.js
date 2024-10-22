@@ -218,7 +218,7 @@ function App() {
 
       setUserMarkers(newUserMarkers);
     }
-  }, [coordData, userData, map, Carmarkers, circles, naver, prevCoordData, userMarkers ]); // userData 추가
+  }, [coordData, userData, map, naver]); // userData 추가
 
   return (
     <>
