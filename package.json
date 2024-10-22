@@ -13,7 +13,6 @@
         "mysql": "^2.18.1",
         "nodemon": "^1.19.2",
         "react-scripts": "^5.0.1",
-        "ws": "^8.18.0",
         "yarn": "^1.22.22"
     },
     "devDependencies": {
