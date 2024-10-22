@@ -65,13 +65,7 @@ app.get('/api/cars', (req,res) => {
         clearInterval(intervalId);
     });
 });
-//     connection.query(
-//         "SELECT * FROM Car",
-//         (err,rows,fileds) => {
-//             res.send(rows);
-//         }
-//     );
-// });
+
 
 
 app.get('/api/users/select/:uninum',(req,res) => {
