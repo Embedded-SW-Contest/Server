@@ -137,6 +137,30 @@ app.post('/api/users', (req, res) => {
     });
 });
 
+app.delete('/api/users/:uni_num', (req, res) => {
+    const uni_num = req.params.uni_num;
+  
+    if (!uni_num) {
+      return res.status(400).send({ message: 'uninum is required' });
+    }
+  
+    // MySQL 쿼리 실행
+    const deleteQuery = 'DELETE FROM User WHERE uni_num = ?';
+    
+    connection.query(deleteQuery, [uni_num], (err, result) => {
+      if (err) {
+        console.error('Error executing query:', err);
+        return res.status(500).send('Error deleting user');
+      }
+  
+      if (result.affectedRows === 0) {
+        return res.status(404).send('Uni_num not found' );
+      }
+  
+      res.status(200).send('User deleted successfully' );
+    });
+  });
+
 
 
 app.post('/api/cars', (req, res) => { // 차량 GPS정보, 값이 없을땐 추가/이미 값이 있으면 업데이트
