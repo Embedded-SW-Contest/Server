@@ -65,13 +65,7 @@ app.get('/cars', (req,res) => {
         clearInterval(intervalId);
     });
 });
-//     connection.query(
-//         "SELECT * FROM Car",
-//         (err,rows,fileds) => {
-//             res.send(rows);
-//         }
-//     );
-// });
+
 
 
 app.get('/users/:uninum',(req,res) => {
@@ -143,33 +137,31 @@ app.post('/users', (req, res) => {
     });
 });
 
-// app.patch('/users', (req,res)=>{
-//     const {uni_num, user_x, user_y, user_dist,user_lat,user_lon} = req.body;
-//     let sql = "UPDATE User set ";
-//     const parameters = [];
+app.delete('/users/:uni_num', (req, res) => {
 
-//     sql += 'user_x = ?, ';
-//     parameters.push(user_x);
-//     sql += 'user_y = ?, ';
-//     parameters.push(user_y);
-//     sql += 'user_dist = ?, ';
-//     parameters.push(user_dist);
-//     sql += 'user_lat = ?, ';
-//     parameters.push(user_lat);
-//     sql += 'user_lon = ?, ';
-//     parameters.push(user_lon);
+    const uni_num = req.params.uni_num;
 
-//     sql = sql.slice(0,-2) + ' WHERE uni_num = ?';
-//     parameters.push(uni_num);
-
-//     connection.query(sql, parameters, (error,results) => {
-//         if(error){
-//             res.status(500).send(error);
-//             return;
-//         }
-//         res.status(201).send('User updated successfully : ${results.insertId}');
-//     });
-// });
+  
+    if (!uni_num) {
+      return res.status(400).send({ message: 'uninum is required' });
+    }
+  
+    // MySQL 쿼리 실행
+    const deleteQuery = 'DELETE FROM User WHERE uni_num = ?';
+    
+    connection.query(deleteQuery, [uni_num], (err, result) => {
+      if (err) {
+        console.error('Error executing query:', err);
+        return res.status(500).send('Error deleting user');
+      }
+  
+      if (result.affectedRows === 0) {
+        return res.status(404).send('Uni_num not found' );
+      }
+  
+      res.status(200).send('User deleted successfully' );
+    });
+  });
 
 
 app.post('/cars', (req, res) => { // 차량 GPS정보, 값이 없을땐 추가/이미 값이 있으면 업데이트
