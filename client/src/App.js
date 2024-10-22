@@ -100,6 +100,7 @@ function App() {
       const newMap = new naver.maps.Map(mapElement.current, {
         mapDataControl: false,
         logoControl: false,
+        scaleControl: false,
         center: firstCarPosition,
         zoom: 20,
         zoomControl: false,
@@ -153,6 +154,11 @@ function App() {
 
           carMarkers.current[index] = { CarMarker, car_lat: car.car_lat, car_lon: car.car_lon };
           circles.current[index] = circle;
+        }
+
+        // 차량이 이동할 때마다 지도 중심을 차량의 새로운 위치로 변경
+        if (index === 0) { 
+          map.setCenter(carPosition);
         }
       });
     }
